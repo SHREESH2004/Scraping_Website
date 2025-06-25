@@ -5,7 +5,6 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/MERN%20Stack-Ready-green?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/UI-Sexy%20AF-ff69b4?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Scraper-Built%20with%20Cheerio-blueviolet?style=for-the-badge" />
 </p>
 
