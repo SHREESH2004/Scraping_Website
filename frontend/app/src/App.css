@@ -99,3 +99,21 @@ textarea {
   transform: scale(1.05);
   transition: transform 0.3s ease-in-out;
 }
+.images {
+  margin: 20px 0;
+}
+
+.image-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.preview-img {
+  width: 150px;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  object-fit: contain;
+}
+

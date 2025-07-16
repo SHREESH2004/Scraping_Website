@@ -9,8 +9,7 @@ const jwt = require("jsonwebtoken");
 const app = express();
 const port = 5000;
 
-
-const JWT_SECRET="mad-max"
+const JWT_SECRET = "mad-max";
 const users = [];
 
 app.use(cors());
@@ -26,8 +25,8 @@ const isValidUrl = (string) => {
   }
 };
 
-// Environment Variable for Python Script Path
-const pythonScriptPath = process.env.PYTHON_SCRIPT_PATH || "E:/static-scrape/backend/scraper.py";
+// Use JS-based scraper now (not Python)
+const scraperScriptPath = path.join(__dirname, "scraper.js");
 
 // Authentication middleware
 const authenticate = (req, res, next) => {
@@ -50,20 +49,18 @@ const authenticate = (req, res, next) => {
 app.post("/register", async (req, res) => {
   const { email, password } = req.body;
 
-  // Validate input
   if (!email || !password) {
     return res.status(400).json({ message: "Email and password are required" });
   }
 
-  // Check if the user already exists
   const existingUser = users.find((user) => user.email === email);
   if (existingUser) {
     return res.status(400).json({ message: "User already registered" });
   }
 
-  // Hash the password and store the user
   const hashedPassword = await bcrypt.hash(password, 10);
   users.push({ email, password: hashedPassword });
+
   res.json({ message: "User registered successfully" });
 });
 
@@ -71,53 +68,56 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
-  // Validate input
   if (!email || !password) {
     return res.status(400).json({ message: "Email and password are required" });
   }
 
-  // Find the user
   const user = users.find((user) => user.email === email);
   if (!user) {
     return res.status(400).json({ message: "Invalid credentials" });
   }
 
-  // Compare passwords
   const isPasswordValid = await bcrypt.compare(password, user.password);
   if (!isPasswordValid) {
     return res.status(400).json({ message: "Invalid credentials" });
   }
 
-  // Generate a token
   const token = jwt.sign({ email: user.email }, JWT_SECRET, { expiresIn: "1h" });
   res.json({ token });
 });
 
-// Scrape route (protected)
+// Scrape route (now uses scraper.js instead of Python)
 app.post("/scrape", authenticate, (req, res) => {
   const { url } = req.body;
 
-  // Validate input
   if (!url || !isValidUrl(url)) {
     return res.status(400).json({ message: "Invalid or missing URL" });
   }
 
-  // Execute the Python script
+  const command = `node "${scraperScriptPath}" "${url}"`;
+  console.log("🔍 Running command:", command);
+
   exec(
-    `python "${pythonScriptPath}" "${url}"`,
-    { maxBuffer: 1024 * 1024 * 10 }, // Increase buffer size for large outputs
+    command,
+    { maxBuffer: 1024 * 1024 * 10 },
     (err, stdout, stderr) => {
       if (err) {
-        console.error("Error executing Python script:", err);
-        return res.status(500).json({ message: "Error executing scraper", error: stderr });
+        console.error("❌ Error executing scraper:", err);
+        return res.status(500).json({
+          message: "Error executing scraper",
+          error: stderr || err.message,
+        });
       }
 
       try {
         const scrapedData = JSON.parse(stdout);
         res.json(scrapedData);
       } catch (parseError) {
-        console.error("Error parsing JSON:", parseError);
-        return res.status(500).json({ message: "Error parsing data", error: parseError.message });
+        console.error("❌ Error parsing JSON:", parseError);
+        return res.status(500).json({
+          message: "Error parsing data",
+          error: parseError.message,
+        });
       }
     }
   );
@@ -126,7 +126,7 @@ app.post("/scrape", authenticate, (req, res) => {
 // Serve static files (optional)
 app.use(express.static(path.join(__dirname, "public")));
 
-// Start the server
+// Start server
 app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+  console.log(`✅ Server running at http://localhost:${port}`);
 });

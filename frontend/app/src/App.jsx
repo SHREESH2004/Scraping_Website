@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "./App.css";
 
 function App() {
@@ -8,19 +8,18 @@ function App() {
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [authMode, setAuthMode] = useState("login"); // "login" or "register"
+  const [authMode, setAuthMode] = useState("login");
 
-  // Handle login or registration
+  const SERVER_URL = import.meta.env.VITE_SERVER_URL;
+
   const handleAuth = async (e) => {
     e.preventDefault();
     const endpoint = authMode === "login" ? "/login" : "/register";
 
     try {
-      const response = await fetch(`http://localhost:5000${endpoint}`, {
+      const response = await fetch(`${SERVER_URL}${endpoint}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
@@ -43,14 +42,13 @@ function App() {
     }
   };
 
-  // Handle scraping
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setOutput(null);
 
     try {
-      const response = await fetch("http://localhost:5000/scrape", {
+      const response = await fetch(`${SERVER_URL}/scrape`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -59,26 +57,25 @@ function App() {
         body: JSON.stringify({ url }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        const data = await response.json();
         setOutput(data);
       } else {
-        const errorData = await response.json();
-        alert(errorData.message || "Failed to scrape the URL");
+        alert(data.message || "Failed to scrape the URL");
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
-      alert("An error occurred while scraping the URL");
+      console.error("Scrape error:", error);
+      alert("Error scraping the URL");
     } finally {
       setLoading(false);
     }
   };
 
-  // Logout
   const handleLogout = () => {
     localStorage.removeItem("token");
     setToken("");
-    alert("Logged out successfully!");
+    alert("Logged out!");
   };
 
   return (
@@ -134,17 +131,29 @@ function App() {
 
               {output.images?.length > 0 && (
                 <div className="images">
-                  <h3>Images:</h3>
-                  {output.images.map((image, index) => (
-                    <img key={index} src={image} alt={`scraped-image-${index}`} />
-                  ))}
+                  <h3>Image Previews:</h3>
+                  <div className="image-grid">
+                    {output.images.map((img, i) => (
+                      <img
+                        key={i}
+                        src={img}
+                        alt={`Scraped ${i}`}
+                        className="preview-img"
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
 
               {output.htmlContent && (
                 <div className="html-content">
-                  <h3>HTML Content:</h3>
-                  <textarea readOnly value={output.htmlContent}></textarea>
+                  <h3>Raw HTML:</h3>
+                  <textarea
+                    readOnly
+                    value={output.htmlContent}
+                    rows={20}
+                    style={{ width: "100%", fontFamily: "monospace" }}
+                  />
                 </div>
               )}
             </div>
