@@ -5,17 +5,16 @@ const { exec } = require("child_process");
 const path = require("path");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-
+const configdotenv = require("dotenv");
+configdotenv.config();
 const app = express();
 const port = 5000;
 
-const JWT_SECRET = "mad-max";
+const JWT_SECRET = process.env.JWT_SECRET;
 const users = [];
 
 app.use(cors());
 app.use(bodyParser.json());
-
-// Validate URL
 const isValidUrl = (string) => {
   try {
     new URL(string);
@@ -25,7 +24,6 @@ const isValidUrl = (string) => {
   }
 };
 
-// Use JS-based scraper now (not Python)
 const scraperScriptPath = path.join(__dirname, "scraper.js");
 
 // Authentication middleware
